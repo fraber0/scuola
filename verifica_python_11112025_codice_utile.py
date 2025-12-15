@@ -536,3 +536,70 @@ print(A.union(B))
 
 # Intersezione
 print(A & B)
+print(A.intersection(B))
+
+
+# Differenza
+print(A - B)
+print(A.difference(B))
+
+
+# Differenza simmetrica
+print(A ^ B)
+print(A.symmetric_difference(B))
+
+
+# Sottoinsiemi
+print({1, 2}.issubset(A))
+print(A.issuperset({1, 2}))
+
+
+# ------------------------------------------------------------
+# 6) ITERAZIONE SU UN SET
+# ------------------------------------------------------------
+
+
+for elemento in A:
+print(elemento)
+
+
+# ------------------------------------------------------------
+# 7) CONVERSIONI
+# ------------------------------------------------------------
+
+
+# Set -> lista
+lista_da_set = list(A)
+
+
+# Lista -> set
+set_da_lista = set(lista)
+
+
+# Stringa -> set (caratteri unici)
+parola = "banana"
+set_lettere = set(parola)
+print(set_lettere) # {'b', 'a', 'n'}
+
+
+# Set -> stringa
+stringa = "".join(set_lettere)
+print(stringa)
+
+
+# ------------------------------------------------------------
+# 8) ESEMPI PRATICI
+# ------------------------------------------------------------
+
+
+# Eliminare duplicati da una lista
+numeri = [1, 2, 2, 3, 4, 4, 5]
+unici = list(set(numeri))
+print(unici)
+
+
+# Elementi in comune tra due liste
+l1 = [1, 2, 3, 4]
+l2 = [3, 4, 5, 6]
+comuni = set(l1) & set(l2)
+print(comuni)
