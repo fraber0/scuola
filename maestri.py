@@ -459,3 +459,461 @@ in_lista = list(tupla)           # (1,2,3) -> [1,2,3]
 s = {4, 5, 6}
 in_lista2 = list(s)             # {4,5,6} -> [4,5,6]  (ordine non garantito)
 in_tupla2 = tuple(s)            # {4,5,6} -> (4,5,6)
+
+
+
+
+# =============================================================================
+#  GUIDA COMPLETA PYTHON - GESTIONE ERRORI E FILE
+#  Tutto quello che ti serve per la verifica
+# =============================================================================
+
+
+# =============================================================================
+# 1. GESTIONE DEGLI ERRORI (Exceptions)
+# =============================================================================
+# Quando Python incontra un errore, "lancia" (raise) un'eccezione.
+# Se non viene gestita, il programma si blocca.
+# Con try/except possiamo gestire gli errori e continuare l'esecuzione.
+
+# --- Errori più comuni ---
+# TypeError        -> operazione su tipo sbagliato  ("ciao" + 5)
+# ValueError       -> valore non valido             (int("abc"))
+# ZeroDivisionError-> divisione per zero            (10 / 0)
+# IndexError       -> indice fuori range            ([1,2,3][10])
+# KeyError         -> chiave non presente           ({"a":1}["b"])
+# FileNotFoundError-> file non trovato              (open("x.txt"))
+# AttributeError   -> attributo/metodo non esiste  ("ciao".vola())
+# NameError        -> variabile non definita        (print(x))
+# ImportError      -> modulo non trovato            (import pippo)
+# RecursionError   -> troppe chiamate ricorsive
+
+
+# --- Struttura base: try / except ---
+try:
+    risultato = 10 / 0          # questa riga lancia ZeroDivisionError
+    print(risultato)            # questa non viene eseguita
+except ZeroDivisionError:
+    print("Errore: divisione per zero!")
+
+# --- Catturare più eccezioni ---
+
+# Modo 1: except separati (consigliato, gestione diversa per ogni errore)
+try:
+    numero = int("abc")
+except ValueError:
+    print("Errore: il valore non è un numero")
+except TypeError:
+    print("Errore: tipo non valido")
+
+# Modo 2: più eccezioni in un unico except
+try:
+    numero = int("abc")
+except (ValueError, TypeError):
+    print("Errore di valore o di tipo")
+
+# --- Catturare qualsiasi eccezione ---
+try:
+    x = 1 / 0
+except Exception as e:          # 'e' contiene il messaggio di errore
+    print(f"Errore generico: {e}")
+
+# --- Accedere al messaggio di errore ---
+try:
+    lista = [1, 2, 3]
+    print(lista[10])
+except IndexError as e:
+    print(f"Tipo errore: {type(e).__name__}")  # IndexError
+    print(f"Messaggio:   {e}")                 # list index out of range
+
+# --- else: eseguito solo se NON ci sono stati errori ---
+try:
+    numero = int("42")
+except ValueError:
+    print("Non è un numero valido")
+else:
+    print(f"Conversione riuscita: {numero}")   # viene eseguito
+
+# --- finally: eseguito SEMPRE, con o senza errori ---
+# Usato tipicamente per chiudere file, connessioni, ecc.
+try:
+    risultato = 10 / 2
+except ZeroDivisionError:
+    print("Divisione per zero")
+finally:
+    print("Questo viene eseguito sempre")      # viene sempre stampato
+
+# --- Struttura completa ---
+try:
+    valore = int(input("Inserisci un numero: "))
+    risultato = 100 / valore
+except ValueError:
+    print("Devi inserire un numero intero!")
+except ZeroDivisionError:
+    print("Non puoi dividere per zero!")
+except Exception as e:
+    print(f"Errore imprevisto: {e}")
+else:
+    print(f"Risultato: {risultato}")
+finally:
+    print("Operazione terminata")
+
+# --- Lanciare un'eccezione manualmente: raise ---
+def dividi(a, b):
+    if b == 0:
+        raise ValueError("Il divisore non può essere zero")
+    return a / b
+
+try:
+    print(dividi(10, 0))
+except ValueError as e:
+    print(f"Errore: {e}")
+
+# --- raise senza argomenti: rilancia l'eccezione corrente ---
+try:
+    try:
+        x = 1 / 0
+    except ZeroDivisionError:
+        print("Gestito internamente, ma rilanciato")
+        raise                   # rilancia lo stesso errore al livello superiore
+except ZeroDivisionError:
+    print("Gestito esternamente")
+
+
+# =============================================================================
+# 2. ECCEZIONI PERSONALIZZATE (Custom Exceptions)
+# =============================================================================
+# Puoi creare eccezioni personalizzate ereditando dalla classe Exception.
+# Utile per dare errori più significativi nella tua applicazione.
+
+# --- Eccezione base personalizzata ---
+class MioErrore(Exception):
+    pass
+
+try:
+    raise MioErrore("Qualcosa è andato storto")
+except MioErrore as e:
+    print(f"Errore personalizzato: {e}")
+
+# --- Eccezione con messaggio di default ---
+class ErroreVotoNonValido(Exception):
+    def __init__(self, voto, messaggio="Il voto deve essere tra 0 e 10"):
+        self.voto = voto
+        self.messaggio = messaggio
+        super().__init__(self.messaggio)    # passa il messaggio alla classe padre
+
+    def __str__(self):
+        return f"{self.messaggio} (ricevuto: {self.voto})"
+
+try:
+    voto = 15
+    if voto > 10 or voto < 0:
+        raise ErroreVotoNonValido(voto)
+except ErroreVotoNonValido as e:
+    print(e)   # Il voto deve essere tra 0 e 10 (ricevuto: 15)
+
+# --- Gerarchia di eccezioni personalizzate ---
+# Utile per creare famiglie di errori correlati
+
+class ErroreApplicazione(Exception):
+    """Errore base dell'applicazione"""
+    pass
+
+class ErroreDatabase(ErroreApplicazione):
+    """Errore relativo al database"""
+    pass
+
+class ErroreConnessione(ErroreDatabase):
+    """Errore di connessione al database"""
+    pass
+
+class ErroreAutenticazione(ErroreApplicazione):
+    """Errore di autenticazione"""
+    def __init__(self, utente):
+        self.utente = utente
+        super().__init__(f"Autenticazione fallita per l'utente: {utente}")
+
+# Posso catturare il genitore per gestire tutti gli errori figli
+try:
+    raise ErroreConnessione("Impossibile connettersi al database")
+except ErroreApplicazione as e:       # cattura anche ErroreDatabase ed ErroreConnessione
+    print(f"Errore nell'app: {e}")
+
+try:
+    raise ErroreAutenticazione("mario_rossi")
+except ErroreAutenticazione as e:
+    print(e)                          # Autenticazione fallita per l'utente: mario_rossi
+    print(f"Utente: {e.utente}")      # mario_rossi
+
+# --- assert: verifica una condizione, lancia AssertionError se falsa ---
+# Usato per controllare condizioni che "devono" essere vere
+def calcola_media(voti):
+    assert len(voti) > 0, "La lista dei voti non può essere vuota"
+    return sum(voti) / len(voti)
+
+try:
+    print(calcola_media([]))
+except AssertionError as e:
+    print(f"Assertion fallita: {e}")
+
+
+# =============================================================================
+# 3. LETTURA E SCRITTURA DI FILE
+# =============================================================================
+# Per aprire un file si usa open().
+# È sempre buona pratica usare 'with' che chiude il file automaticamente.
+
+# --- Modalità di apertura ---
+# "r"  -> read       - lettura (default), errore se il file non esiste
+# "w"  -> write      - scrittura, SOVRASCRIVE il file se esiste, lo crea se no
+# "a"  -> append     - aggiunge in fondo, lo crea se non esiste
+# "x"  -> exclusive  - crea il file, errore se esiste già
+# "r+" -> read+write - lettura e scrittura, il file deve esistere
+# "b"  -> binary     - modalità binaria (es. "rb", "wb") per immagini, ecc.
+
+# =============================================================================
+# 3.1 SCRITTURA DI FILE
+# =============================================================================
+
+# --- Scrittura base con write() ---
+with open("esempio.txt", "w") as file:
+    file.write("Prima riga\n")         # \n va a capo manualmente
+    file.write("Seconda riga\n")
+    file.write("Terza riga\n")
+# Il file viene chiuso automaticamente all'uscita dal blocco with
+
+# --- Scrittura con writelines() ---
+# Scrive una lista di stringhe (devi aggiungere \n manualmente)
+righe = ["Prima riga\n", "Seconda riga\n", "Terza riga\n"]
+with open("esempio.txt", "w") as file:
+    file.writelines(righe)
+
+# --- Aggiungere in fondo con append ---
+with open("esempio.txt", "a") as file:
+    file.write("Quarta riga aggiunta dopo\n")
+
+# --- Scrittura con print() su file ---
+with open("esempio.txt", "w") as file:
+    print("Prima riga", file=file)     # print gestisce \n automaticamente
+    print("Seconda riga", file=file)
+
+# =============================================================================
+# 3.2 LETTURA DI FILE
+# =============================================================================
+
+# --- Leggere tutto il file in una stringa con read() ---
+with open("esempio.txt", "r") as file:
+    contenuto = file.read()
+print(contenuto)
+
+# --- Leggere tutte le righe in una lista con readlines() ---
+with open("esempio.txt", "r") as file:
+    righe = file.readlines()           # ['Prima riga\n', 'Seconda riga\n', ...]
+print(righe)
+
+# Rimuovere il \n finale da ogni riga
+righe_pulite = [riga.strip() for riga in righe]
+print(righe_pulite)                    # ['Prima riga', 'Seconda riga', ...]
+
+# --- Leggere una riga alla volta con readline() ---
+with open("esempio.txt", "r") as file:
+    riga = file.readline()             # legge solo la prima riga
+    print(riga)
+
+# --- Iterare riga per riga (modo più efficiente per file grandi) ---
+with open("esempio.txt", "r") as file:
+    for riga in file:
+        print(riga.strip())            # strip() rimuove \n e spazi
+
+# --- Gestire il caso in cui il file non esiste ---
+try:
+    with open("file_inesistente.txt", "r") as file:
+        contenuto = file.read()
+except FileNotFoundError:
+    print("Il file non esiste!")
+
+# =============================================================================
+# 3.3 LETTURA E SCRITTURA DI FILE CSV
+# =============================================================================
+import csv
+
+# --- Scrittura CSV ---
+studenti = [
+    ["Nome", "Cognome", "Voto"],
+    ["Mario", "Rossi", 8],
+    ["Luca", "Bianchi", 7],
+    ["Anna", "Verdi", 9],
+]
+
+with open("studenti.csv", "w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerows(studenti)         # scrive tutte le righe
+
+# Scrittura con dizionari
+studenti_dict = [
+    {"nome": "Mario", "voto": 8},
+    {"nome": "Luca",  "voto": 7},
+]
+with open("studenti_dict.csv", "w", newline="") as file:
+    campi = ["nome", "voto"]
+    writer = csv.DictWriter(file, fieldnames=campi)
+    writer.writeheader()               # scrive la riga di intestazione
+    writer.writerows(studenti_dict)
+
+# --- Lettura CSV ---
+with open("studenti.csv", "r") as file:
+    reader = csv.reader(file)
+    for riga in reader:
+        print(riga)                    # ogni riga è una lista
+
+# Lettura con dizionari (usa la prima riga come intestazione)
+with open("studenti_dict.csv", "r") as file:
+    reader = csv.DictReader(file)
+    for riga in reader:
+        print(riga["nome"], riga["voto"])
+
+# =============================================================================
+# 3.4 LETTURA E SCRITTURA DI FILE JSON
+# =============================================================================
+import json
+
+# --- Scrittura JSON ---
+dati = {
+    "nome": "Mario",
+    "età": 30,
+    "hobby": ["calcio", "lettura"],
+    "attivo": True
+}
+
+with open("dati.json", "w") as file:
+    json.dump(dati, file, indent=4)    # indent=4 per formattazione leggibile
+
+# --- Lettura JSON ---
+with open("dati.json", "r") as file:
+    dati_letti = json.load(file)
+print(dati_letti["nome"])             # Mario
+print(dati_letti["hobby"])            # ['calcio', 'lettura']
+
+# --- Conversione stringa <-> JSON (senza file) ---
+stringa_json = json.dumps(dati)       # dizionario -> stringa JSON
+dizionario   = json.loads(stringa_json)  # stringa JSON -> dizionario
+
+# =============================================================================
+# 3.5 FORMATTAZIONE DELL'OUTPUT SU FILE E A SCHERMO
+# =============================================================================
+
+# --- Formattazione con f-string (già vista nelle stringhe) ---
+nome = "Mario"
+voto = 8.5
+print(f"Studente: {nome}, Voto: {voto}")
+
+# --- Formattazione numeri ---
+pi = 3.14159265358979
+
+print(f"{pi:.2f}")        # 3.14     (2 decimali)
+print(f"{pi:.4f}")        # 3.1416   (4 decimali)
+print(f"{pi:10.2f}")      # "      3.14" (larghezza 10, 2 decimali)
+print(f"{pi:<10.2f}")     # "3.14      " (allineato a sinistra)
+print(f"{pi:>10.2f}")     # "      3.14" (allineato a destra)
+print(f"{pi:^10.2f}")     # "   3.14   " (centrato)
+
+numero = 1000000
+print(f"{numero:,}")      # 1,000,000  (separatore migliaia)
+print(f"{numero:_}")      # 1_000_000  (separatore con underscore)
+
+# --- Formattazione interi ---
+n = 42
+print(f"{n:05d}")         # 00042   (padding con zeri, larghezza 5)
+print(f"{n:b}")           # 101010  (binario)
+print(f"{n:o}")           # 52      (ottale)
+print(f"{n:x}")           # 2a      (esadecimale minuscolo)
+print(f"{n:X}")           # 2A      (esadecimale maiuscolo)
+
+# --- Tabelle formattate ---
+print(f"{'Nome':<10} {'Voto':>5} {'Media':>8}")
+print("-" * 25)
+print(f"{'Mario':<10} {8:>5} {8.33:>8.2f}")
+print(f"{'Luca':<10} {7:>5} {7.67:>8.2f}")
+print(f"{'Anna':<10} {9:>5} {9.00:>8.2f}")
+
+# Output:
+# Nome        Voto    Media
+# -------------------------
+# Mario          8     8.33
+# Luca           7     7.67
+# Anna           9     9.00
+
+# --- Scrivere output formattato su file ---
+studenti = [("Mario", 8, 8.33), ("Luca", 7, 7.67), ("Anna", 9, 9.00)]
+
+with open("report.txt", "w") as file:
+    file.write(f"{'Nome':<10} {'Voto':>5} {'Media':>8}\n")
+    file.write("-" * 25 + "\n")
+    for nome, voto, media in studenti:
+        file.write(f"{nome:<10} {voto:>5} {media:>8.2f}\n")
+
+# =============================================================================
+# 3.6 LAVORARE CON I PERCORSI - modulo os e pathlib
+# =============================================================================
+import os
+
+# Percorso corrente
+print(os.getcwd())                         # /home/utente/Desktop/...
+
+# Verificare se un file/cartella esiste
+print(os.path.exists("esempio.txt"))       # True o False
+print(os.path.isfile("esempio.txt"))       # True se è un file
+print(os.path.isdir("cartella"))           # True se è una cartella
+
+# Costruire percorsi in modo sicuro (funziona su tutti i sistemi operativi)
+percorso = os.path.join("cartella", "sottocartella", "file.txt")
+print(percorso)   # cartella/sottocartella/file.txt (su Mac/Linux)
+
+# Informazioni sul file
+print(os.path.basename("/cartella/file.txt"))  # file.txt
+print(os.path.dirname("/cartella/file.txt"))   # /cartella
+print(os.path.splitext("file.txt"))            # ('file', '.txt')
+
+# Creare/eliminare cartelle
+os.makedirs("nuova_cartella", exist_ok=True)   # crea cartella (exist_ok evita errore se esiste)
+os.rmdir("nuova_cartella")                     # elimina cartella vuota
+
+# Listare file in una cartella
+for file in os.listdir("."):
+    print(file)
+
+# --- pathlib (modo moderno, da Python 3.4+) ---
+from pathlib import Path
+
+p = Path("esempio.txt")
+print(p.exists())           # True/False
+print(p.stem)               # "esempio" (nome senza estensione)
+print(p.suffix)             # ".txt"
+print(p.parent)             # cartella padre
+
+# Leggere e scrivere con pathlib
+testo = p.read_text()                          # legge tutto il file
+p.write_text("nuovo contenuto")               # sovrascrive il file
+
+# =============================================================================
+# RIEPILOGO
+# =============================================================================
+
+# try/except/else/finally  -> gestione errori
+# raise                    -> lancia un'eccezione
+# class MioErrore(Exception) -> eccezione personalizzata
+
+# open("file", "r")  -> lettura
+# open("file", "w")  -> scrittura (sovrascrive)
+# open("file", "a")  -> aggiunta in fondo
+
+# file.read()        -> tutto il file in una stringa
+# file.readlines()   -> tutte le righe in una lista
+# file.readline()    -> una riga alla volta
+# file.write()       -> scrive una stringa
+# file.writelines()  -> scrive una lista di stringhe
+
+# json.dump/load     -> scrittura/lettura JSON su file
+# json.dumps/loads   -> conversione JSON <-> stringa
+# csv.writer/reader  -> scrittura/lettura CSV
+
